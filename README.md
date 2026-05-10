@@ -53,8 +53,8 @@ graph TD
 
 1. **Clone the repository**:
    ```bash
-   git clone <repo-url>
-   cd autisense-ai-application/AutiSenseAI
+   git clone "https://github.com/aounraza379/autisense-ai-application.git"
+   cd autisense-ai-application
    ```
 
 2. **Install dependencies**:
@@ -71,6 +71,23 @@ graph TD
 4. **Run the application**:
    - For Android: `npm run android`
    - For Expo Go: `npm start`
+
+## In case of runtime (java error)
+
+1. **Make sure Script is enabled on your system**:
+   ```bash
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+   ```
+2. **Run following commands**:
+   ```bash
+   npx expo install @react-navigation/native
+   npx expo install @react-navigation/stack
+   npx expo install react-native-screens react-native-safe-area-context react-native-gesture-handler
+   ```
+3. **Run and see app on expo go**:
+   ```bash
+   npx expo start -c
+   ```
 
 ## Progress Update
 - [x] Initial UI/UX Architecture
