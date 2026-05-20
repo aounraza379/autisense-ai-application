@@ -60,3 +60,26 @@ export function handleGroqError(errorCode) {
   };
   return messages[errorCode] || "I'm here with you.";
 }
+
+export async function transcribeAudio(fileUri) {
+  const formData = new FormData();
+  formData.append('file', {
+    uri: fileUri,
+    type: 'audio/m4a', // Standard for expo-av
+    name: 'recording.m4a'
+  });
+  formData.append('model', 'whisper-large-v3');
+
+  try {
+    const response = await axios.post('https://api.groq.com/openai/v1/audio/transcriptions', formData, {
+      headers: {
+        'Authorization': `Bearer ${process.env.EXPO_PUBLIC_GROQ_API_KEY}`,
+        'Content-Type': 'multipart/form-data',
+      }
+    });
+    return response.data.text;
+  } catch (error) {
+    console.log('[DEBUG] Transcription error:', error.response?.data || error.message);
+    throw new Error('Transcription failed');
+  }
+}

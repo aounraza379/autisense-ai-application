@@ -37,6 +37,17 @@ export default function ChatScreen({ route }) {
     const engine = new ChatEngine(childId, sessionId, role);
     await engine.init();
     engineRef.current = engine;
+
+    // Set up voice callbacks
+    recognizer.current.onResult = (text) => {
+      setListening(false);
+      handleInput(text, 'voice');
+    };
+
+    recognizer.current.onError = (msg) => {
+      setListening(false);
+      setCoaching(msg);
+    };
   }
 
   async function cleanup() {

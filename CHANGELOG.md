@@ -24,29 +24,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ✅ All UI screens implemented (Home, Chat, Schedule, Profile)
 - ✅ Boolean safety utilities preventing Android crashes
 - ✅ Error boundaries and global error guards
-- ⚠️ Speech-to-text (STT) disabled (requires dev build)
-- ⚠️ Environment variables need configuration
+- ✅ Environment variables configured (.env created and tested)
+- ✅ Speech-to-text (STT) implementation ready
 
 #### Known Issues
-- Voice input (STT) not functional in Expo Go - requires development build
-- `.env` file needs to be created from `.env.example`
+- Voice input (STT) requires a development build (`npx expo run:android` or `run:ios`), it cannot run in Expo Go.
 - No offline mode yet - requires internet for AI responses
 
 ---
 
 ## Development Phases
 
-### Phase 1: Environment & Configuration (Planned)
-- [ ] Create and configure `.env` file
-- [ ] Test Groq API integration
-- [ ] Verify app runs in Expo Go
-- [ ] Document setup process
+### Phase 1: Environment & Configuration (Complete)
+- [x] Create and configure `.env` file
+- [x] Test Groq API integration
+- [x] Verify app runs in Expo Go
+- [x] Document setup process
 
-### Phase 2: Voice Input Implementation (Planned)
-- [ ] Enable STT in development build
-- [ ] Add microphone permissions
-- [ ] Test voice recognition
-- [ ] Update UI for recording state
+### Phase 2: Voice Input Implementation (Complete)
+- [x] Enable STT in development build
+- [x] Add microphone permissions
+- [x] Test voice recognition
+- [x] Update UI for recording state
 
 ### Phase 3: Testing & Bug Fixes (Planned)
 - [ ] Comprehensive feature testing
