@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { ChatEngine }      from '../engine/chatEngine';
 import { SpeechRecognizer } from '../engine/voice';
-import { startSession, endSession } from '../db/database';
+import { startSession, endSession, getRecentInteractions } from '../db/database';
 import EmotionBoard  from '../components/EmotionBoard';
 import CoachingLabel from '../components/CoachingLabel';
 import VoiceButton   from '../components/VoiceButton';
@@ -37,6 +37,31 @@ export default function ChatScreen({ route }) {
     const engine = new ChatEngine(childId, sessionId, role);
     await engine.init();
     engineRef.current = engine;
+
+    // Load Chat History
+    try {
+      const historyRows = await getRecentInteractions(childId, 20); // Get last 20 interactions
+      const loadedMessages = [];
+      // DB returns newest first (DESC), so we reverse it to display oldest first
+      historyRows.reverse().forEach((row) => {
+         if (row.user_text) {
+           loadedMessages.push({ id: `hist-u-${row.id}`, role: 'user', content: row.user_text });
+         }
+         if (row.ai_response) {
+           loadedMessages.push({ id: `hist-a-${row.id}`, role: 'assistant', content: row.ai_response });
+         }
+      });
+      setMessages(loadedMessages);
+      
+      // Scroll to end after a brief delay
+      setTimeout(() => {
+        if (flatListRef.current) {
+            flatListRef.current.scrollToEnd({ animated: false });
+        }
+      }, 300);
+    } catch (err) {
+      console.log('[ChatScreen] Error loading history:', err);
+    }
 
     // Set up voice callbacks
     recognizer.current.onResult = (text) => {
