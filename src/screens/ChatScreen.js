@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  StyleSheet, SafeAreaView, TextInput
+  StyleSheet, SafeAreaView, TextInput, ActivityIndicator
 } from 'react-native';
 import { ChatEngine }      from '../engine/chatEngine';
 import { SpeechRecognizer } from '../engine/voice';
@@ -150,7 +150,7 @@ export default function ChatScreen({ route }) {
         )}
       />
 
-      {toBool(processing) === true ? <Text style={{ textAlign:'center', margin:8 }}>Thinking...</Text> : null}
+      {toBool(processing) === true ? <ActivityIndicator size="small" color="#3F51B5" style={{ margin:8 }} /> : null}
 
       <View style={styles.inputRow}>
         <TextInput 

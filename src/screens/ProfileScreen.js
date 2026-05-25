@@ -25,7 +25,7 @@ export default function ProfileScreen({ route }) {
     setLoading(false);
   }
 
-  if (toBool(loading) === true) return <View style={{flex:1, justifyContent:'center', alignItems:'center'}}><Text>Loading Profile...</Text></View>;
+  if (toBool(loading) === true) return <View style={{flex:1, justifyContent:'center', alignItems:'center'}}><ActivityIndicator size="large" color="#7E57C2" /><Text style={{marginTop: 10}}>Loading Profile...</Text></View>;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

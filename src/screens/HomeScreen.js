@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HomeScreen({ navigation, route }) {
   const { childId } = route.params;
@@ -21,7 +22,10 @@ export default function HomeScreen({ navigation, route }) {
               styles.modeBtn, 
               m.color ? { backgroundColor: m.color } : null
           ]}
-          onPress={() => navigation.navigate('Chat', { childId, role: m.key })}
+          onPress={async () => {
+            await AsyncStorage.setItem('currentRole', m.key);
+            navigation.navigate('Chat', { childId, role: m.key });
+          }}
         >
           <Text style={styles.modeTxt}>{m.label}</Text>
         </TouchableOpacity>
