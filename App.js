@@ -18,6 +18,7 @@ import HomeScreen     from './src/screens/HomeScreen';
 import ChatScreen     from './src/screens/ChatScreen';
 import ScheduleScreen from './src/screens/ScheduleScreen';
 import ProfileScreen  from './src/screens/ProfileScreen';
+import AnalyticsScreen from './src/screens/AnalyticsScreen';
 
 const Stack = createStackNavigator();
 
@@ -105,6 +106,8 @@ export default function App() {
               options={{ title: 'My Day' }} />
             <Stack.Screen name="Profile"  component={ProfileScreen}
               options={{ title: 'Profile' }} />
+            <Stack.Screen name="Analytics" component={AnalyticsScreen}
+              options={{ title: 'Analytics' }} />
           </Stack.Navigator>
         </NavigationContainer>
       </ErrorBoundary>

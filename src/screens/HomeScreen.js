@@ -44,6 +44,13 @@ export default function HomeScreen({ navigation, route }) {
       >
         <Text style={styles.profileTxt}>My Profile</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.analyticsBtn}
+        onPress={() => navigation.navigate('Analytics', { childId })}
+      >
+        <Text style={styles.analyticsTxt}>Analytics & Progress</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -55,6 +62,8 @@ const styles = StyleSheet.create({
   modeTxt:     { fontSize:20, fontWeight:'600' },
   scheduleBtn: { width:'100%', padding:18, borderRadius:16, backgroundColor:'#F3E5F5', alignItems:'center', marginTop:8, marginBottom:16 },
   scheduleTxt: { fontSize:18, fontWeight:'600' },
-  profileBtn:  { width:'100%', padding:18, borderRadius:16, backgroundColor:'#FAFAFA', borderWidth:1, borderColor:'#ddd', alignItems:'center' },
+  profileBtn:  { width:'100%', padding:18, borderRadius:16, backgroundColor:'#FAFAFA', borderWidth:1, borderColor:'#ddd', alignItems:'center', marginBottom:16 },
   profileTxt:  { fontSize:16, color:'#555' },
+  analyticsBtn:{ width:'100%', padding:18, borderRadius:16, backgroundColor:'#E8EAF6', alignItems:'center' },
+  analyticsTxt:{ fontSize:16, fontWeight:'600', color:'#3F51B5' },
 });

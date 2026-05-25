@@ -1,4 +1,6 @@
 import * as SQLite from 'expo-sqlite';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 
 let db = null;
 
@@ -199,4 +201,49 @@ export async function getSetting(key) {
     'SELECT value FROM app_settings WHERE key = ?', [key]
   );
   return row ? row.value : null;
+}
+
+export async function getSessionAnalytics(childId, days = 7) {
+  return await db.getAllAsync(`
+    SELECT 
+      COUNT(*) as total_sessions,
+      AVG((julianday(ended_at) - julianday(started_at)) * 24 * 60) as avg_duration_minutes,
+      date(started_at) as session_date
+    FROM sessions
+    WHERE child_id = ? AND started_at >= datetime('now', '-${days} days') AND ended_at IS NOT NULL
+    GROUP BY session_date
+    ORDER BY session_date ASC
+  `, [childId]);
+}
+
+export async function exportDataAsCSV(childId) {
+  try {
+    const interactions = await db.getAllAsync(
+      'SELECT * FROM interactions WHERE child_id = ? ORDER BY timestamp DESC', [childId]
+    );
+    
+    let csvString = 'id,session_id,user_text,ai_response,detected_state,timestamp\n';
+    interactions.forEach(row => {
+      const userText = (row.user_text || '').replace(/"/g, '""');
+      const aiResponse = (row.ai_response || '').replace(/"/g, '""');
+      csvString += `${row.id},${row.session_id},"${userText}","${aiResponse}",${row.detected_state},${row.timestamp}\n`;
+    });
+
+    const fileUri = FileSystem.documentDirectory + 'autisense_data.csv';
+    await FileSystem.writeAsStringAsync(fileUri, csvString);
+
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'text/csv',
+        dialogTitle: 'Export Analytics Data',
+        UTI: 'public.comma-separated-values-text'
+      });
+      return { success: true };
+    } else {
+      return { success: false, error: 'Sharing is not available on this device' };
+    }
+  } catch (error) {
+    console.error("Export error:", error);
+    return { success: false, error: error.message || 'Failed to export data' };
+  }
 }
