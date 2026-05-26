@@ -36,7 +36,7 @@ export default function ProfileScreen({ route }) {
         {emotions.length === 0
           ? <Text style={styles.empty}>No data yet — keep using the app!</Text>
           : emotions.map(e => (
-            <View key={e.detected_state} style={styles.row}>
+            <View key={e.detected_state} style={styles.row} accessible={true} accessibilityLabel={`Emotion ${e.detected_state} detected ${e.count} times`}>
               <Text style={styles.stateName}>{e.detected_state}</Text>
               <Text style={styles.stateCount}>{e.count}x</Text>
             </View>
@@ -48,7 +48,7 @@ export default function ProfileScreen({ route }) {
         {Object.keys(prefs).length === 0
           ? <Text style={styles.empty}>None yet — they will appear as the child speaks!</Text>
           : Object.entries(prefs).map(([k,v]) => (
-            <Text key={k} style={styles.pref}>• {k}: {v}</Text>
+            <Text key={k} style={styles.pref} accessible={true} accessibilityLabel={`Preference ${k} is ${v}`}>• {k}: {v}</Text>
           ))
         }
       </Section>
@@ -57,7 +57,7 @@ export default function ProfileScreen({ route }) {
         {patterns.length === 0
           ? <Text style={styles.empty}>Need more sessions to detect patterns.</Text>
           : patterns.map((p,i) => (
-            <View key={i} style={styles.insight}>
+            <View key={i} style={styles.insight} accessible={true} accessibilityLabel={`Insight: ${p.insight}. ${p.action ? `Suggested Action: ${p.action}` : ''}`}>
               <Text style={styles.insightText}>{p.insight}</Text>
               {p.action ? <Text style={styles.insightAction}>Insight: {p.action}</Text> : null}
             </View>

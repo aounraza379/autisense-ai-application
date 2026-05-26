@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { getSessionAnalytics, exportDataAsCSV } from '../db/database';
 import { toBool } from '../utils/bool';
+import Toast from 'react-native-toast-message';
 
 export default function AnalyticsScreen({ route }) {
   const { childId } = route.params;
@@ -22,16 +23,33 @@ export default function AnalyticsScreen({ route }) {
     try {
       const result = await exportDataAsCSV(childId);
       if (result && !result.success) {
-        Alert.alert("Export Failed", result.error || "An unknown error occurred.");
+        Toast.show({
+          type: 'error',
+          text1: 'Export Failed',
+          text2: result.error || "An unknown error occurred.",
+          position: 'bottom'
+        });
+      } else {
+        Toast.show({
+          type: 'success',
+          text1: 'Export Successful',
+          text2: 'Your data has been exported successfully.',
+          position: 'bottom'
+        });
       }
     } catch (error) {
-      Alert.alert("Export Failed", error.message || "An error occurred during export.");
+      Toast.show({
+        type: 'error',
+        text1: 'Export Failed',
+        text2: error.message || "An error occurred during export.",
+        position: 'bottom'
+      });
     }
   }
 
   if (toBool(loading)) {
     return (
-      <View style={styles.center}>
+      <View style={styles.center} accessible={true} accessibilityRole="progressbar" accessibilityLabel="Loading Analytics">
         <ActivityIndicator size="large" color="#3F51B5" />
         <Text style={{ marginTop: 10 }}>Loading Analytics...</Text>
       </View>
@@ -42,15 +60,15 @@ export default function AnalyticsScreen({ route }) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Weekly Progress</Text>
+      <Text style={styles.title} accessible={true} accessibilityRole="header">Weekly Progress</Text>
       
-      <View style={styles.card}>
+      <View style={styles.card} accessible={true}>
         <Text style={styles.cardTitle}>Average Session Duration (mins)</Text>
         {sessionData.length === 0 ? (
           <Text style={styles.empty}>No session data yet.</Text>
         ) : (
           sessionData.map(d => (
-            <View key={d.session_date} style={styles.barRow}>
+            <View key={d.session_date} style={styles.barRow} accessible={true} accessibilityLabel={`Session on ${d.session_date}, duration ${Math.round(d.avg_duration_minutes)} minutes`}>
               <Text style={styles.dateLabel}>{d.session_date.slice(5)}</Text>
               <View style={styles.barTrack}>
                 <View style={[styles.barFill, { width: `${(d.avg_duration_minutes / maxDuration) * 100}%` }]} />
@@ -61,7 +79,13 @@ export default function AnalyticsScreen({ route }) {
         )}
       </View>
 
-      <TouchableOpacity style={styles.exportBtn} onPress={handleExport}>
+      <TouchableOpacity 
+        style={styles.exportBtn} 
+        onPress={handleExport}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Export Data as CSV"
+      >
         <Text style={styles.exportTxt}>Export Data (CSV)</Text>
       </TouchableOpacity>
     </ScrollView>

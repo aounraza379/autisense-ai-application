@@ -8,12 +8,13 @@ console.error = (...args) => {
   }
   originalError(...args);
 };
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, useColorScheme } from 'react-native';
 import { initDatabase, createChildProfile, getSetting, setSetting } from './src/db/database';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import Toast from 'react-native-toast-message';
 import HomeScreen     from './src/screens/HomeScreen';
 import ChatScreen     from './src/screens/ChatScreen';
 import ScheduleScreen from './src/screens/ScheduleScreen';
@@ -42,6 +43,9 @@ class ErrorBoundary extends React.Component {
           <TouchableOpacity
             onPress={() => this.setState({ hasError: false })}
             style={{ padding:14, backgroundColor:'#3F51B5', borderRadius:10 }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Try Again"
           >
             <Text style={{ color:'white', fontSize:16 }}>Try Again</Text>
           </TouchableOpacity>
@@ -55,6 +59,7 @@ class ErrorBoundary extends React.Component {
 export default function App() {
   const [ready,   setReady]   = useState(false);
   const [childId, setChildId] = useState(null);
+  const scheme = useColorScheme();
 
   useEffect(() => { init(); }, []);
 
@@ -86,7 +91,10 @@ export default function App() {
 
   if (!ready) {
     return (
-      <View style={{ flex:1, justifyContent:'center', alignItems:'center' }}>
+      <View style={{ flex:1, justifyContent:'center', alignItems:'center' }}
+            accessible={true}
+            accessibilityRole="progressbar"
+            accessibilityLabel="Loading application">
         <Text>Loading App...</Text>
       </View>
     );
@@ -95,7 +103,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>
-        <NavigationContainer>
+        <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
           <Stack.Navigator initialRouteName="Home">
             <Stack.Screen name="Home"     component={HomeScreen}
               initialParams={{ childId }}
@@ -111,6 +119,7 @@ export default function App() {
           </Stack.Navigator>
         </NavigationContainer>
       </ErrorBoundary>
+      <Toast />
     </GestureHandlerRootView>
   );
 }

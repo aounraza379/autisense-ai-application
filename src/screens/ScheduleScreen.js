@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { logTaskCompletion } from '../db/database';
 import { callGroq } from '../api/groq';
 import { speak } from '../engine/voice';
 import { SCENARIO_PROFILES } from '../constants/profiles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { toBool } from '../utils/bool';
+import Toast from 'react-native-toast-message';
 
 const TASKS = ['Brush Teeth','Breakfast','Lunch','Playing Game','Dinner','Sleep'];
 
@@ -18,13 +19,20 @@ export default function ScheduleScreen({ route }) {
     if (toBool(checked[task])) return; 
     setLoading(prev => ({ ...prev, [task]: true }));
 
-    await logTaskCompletion(childId, task);
-    setChecked(prev => ({ ...prev, [task]: true }));
-
-    const storedRole = await AsyncStorage.getItem('currentRole') || 'parent';
-    const profile = SCENARIO_PROFILES[storedRole] || SCENARIO_PROFILES.parent;
-
     try {
+      await logTaskCompletion(childId, task);
+      setChecked(prev => ({ ...prev, [task]: true }));
+
+      Toast.show({
+        type: 'success',
+        text1: 'Task Completed!',
+        text2: `Great job finishing "${task}".`,
+        position: 'top'
+      });
+
+      const storedRole = await AsyncStorage.getItem('currentRole') || 'parent';
+      const profile = SCENARIO_PROFILES[storedRole] || SCENARIO_PROFILES.parent;
+
       const response = await callGroq([
         { role: 'system', content: `${profile.role}\nONE sentence only. Maximum 10 words. Celebrate completing "${task}" warmly. No questions.` },
         { role: 'user',   content: `I finished ${task}!` }
@@ -46,7 +54,7 @@ export default function ScheduleScreen({ route }) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>My Day</Text>
+      <Text style={styles.title} accessible={true} accessibilityRole="header">My Day</Text>
       <Text style={styles.sub}>Tick each task when you finish it!</Text>
       {TASKS.map(task => {
         const isChecked = toBool(checked[task]);
@@ -62,6 +70,10 @@ export default function ScheduleScreen({ route }) {
             ]}
             onPress={() => handleCheck(task)}
             disabled={isDisabled === true}
+            accessible={true}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isChecked === true }}
+            accessibilityLabel={`Mark ${task} as complete`}
           >
             <Text style={styles.taskIcon}>
               {isChecked === true ? 'DONE' : 'TODO'}
@@ -72,7 +84,7 @@ export default function ScheduleScreen({ route }) {
             ]}>
               {task}
             </Text>
-            {isLoading === true ? <Text style={styles.loading}>...</Text> : null}
+            {isLoading === true ? <ActivityIndicator size="small" color="#3F51B5" /> : null}
           </TouchableOpacity>
         );
       })}

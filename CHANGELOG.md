@@ -58,11 +58,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [x] Progress charts
 - [x] Data export feature
 
-### Phase 5: UI/UX Improvements (Planned)
-- [ ] Loading states
-- [ ] Toast notifications
-- [ ] Dark mode
-- [ ] Accessibility improvements
+### Phase 5: UI/UX Improvements (Complete)
+- [x] Loading states
+- [x] Toast notifications
+- [x] Dark mode
+- [x] Accessibility improvements
 
 ### Phase 6: Offline Mode (Planned)
 - [ ] Message queue system

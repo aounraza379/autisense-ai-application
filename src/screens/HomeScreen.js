@@ -13,7 +13,7 @@ export default function HomeScreen({ navigation, route }) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Who is with you today?</Text>
+      <Text style={styles.title} accessible={true} accessibilityRole="header">Who is with you today?</Text>
 
       {modes.map(m => (
         <TouchableOpacity
@@ -26,6 +26,9 @@ export default function HomeScreen({ navigation, route }) {
             await AsyncStorage.setItem('currentRole', m.key);
             navigation.navigate('Chat', { childId, role: m.key });
           }}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={`Select role: ${m.label}`}
         >
           <Text style={styles.modeTxt}>{m.label}</Text>
         </TouchableOpacity>
@@ -34,6 +37,9 @@ export default function HomeScreen({ navigation, route }) {
       <TouchableOpacity
         style={styles.scheduleBtn}
         onPress={() => navigation.navigate('Schedule', { childId })}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Go to My Daily Schedule"
       >
         <Text style={styles.scheduleTxt}>My Daily Schedule</Text>
       </TouchableOpacity>
@@ -41,6 +47,9 @@ export default function HomeScreen({ navigation, route }) {
       <TouchableOpacity
         style={styles.profileBtn}
         onPress={() => navigation.navigate('Profile', { childId })}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Go to My Profile"
       >
         <Text style={styles.profileTxt}>My Profile</Text>
       </TouchableOpacity>
@@ -48,6 +57,9 @@ export default function HomeScreen({ navigation, route }) {
       <TouchableOpacity
         style={styles.analyticsBtn}
         onPress={() => navigation.navigate('Analytics', { childId })}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Go to Analytics and Progress"
       >
         <Text style={styles.analyticsTxt}>Analytics & Progress</Text>
       </TouchableOpacity>

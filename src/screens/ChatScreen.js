@@ -150,7 +150,7 @@ export default function ChatScreen({ route }) {
         )}
       />
 
-      {toBool(processing) === true ? <ActivityIndicator size="small" color="#3F51B5" style={{ margin:8 }} /> : null}
+      {toBool(processing) === true ? <ActivityIndicator size="small" color="#3F51B5" style={{ margin:8 }} accessible={true} accessibilityRole="progressbar" accessibilityLabel="AI is typing" /> : null}
 
       <View style={styles.inputRow}>
         <TextInput 
@@ -159,6 +159,9 @@ export default function ChatScreen({ route }) {
             onChangeText={setInputText}
             placeholder="Type here..."
             editable={toBool(!processing) === true}
+            accessible={true}
+            accessibilityLabel="Message input field"
+            accessibilityHint="Type your message to the AI here"
         />
         <TouchableOpacity 
             style={styles.sendBtn}
@@ -166,6 +169,9 @@ export default function ChatScreen({ route }) {
                 handleInput(inputText, 'text');
                 setInputText('');
             }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Send message"
         >
             <Text style={styles.sendBtnTxt}>Send</Text>
         </TouchableOpacity>
