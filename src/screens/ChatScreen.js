@@ -40,7 +40,7 @@ export default function ChatScreen({ route }) {
 
     // Load Chat History
     try {
-      const historyRows = await getRecentInteractions(childId, 20); // Get last 20 interactions
+      const historyRows = await getRecentInteractions(childId, 20, role); // Get last 20 interactions for this role
       const loadedMessages = [];
       // DB returns newest first (DESC), so we reverse it to display oldest first
       historyRows.reverse().forEach((row) => {

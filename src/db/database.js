@@ -180,13 +180,23 @@ export async function getEmotionFrequency(childId, days = 7) {
   );
 }
 
-export async function getRecentInteractions(childId, limit = 10) {
-  return await db.getAllAsync(
-    `SELECT * FROM interactions
-     WHERE child_id = ?
-     ORDER BY timestamp DESC LIMIT ?`,
-    [childId, limit]
-  );
+export async function getRecentInteractions(childId, limit = 10, role = null) {
+  if (role) {
+    return await db.getAllAsync(
+      `SELECT i.* FROM interactions i
+       JOIN sessions s ON i.session_id = s.id
+       WHERE i.child_id = ? AND s.role = ?
+       ORDER BY i.timestamp DESC LIMIT ?`,
+      [childId, role, limit]
+    );
+  } else {
+    return await db.getAllAsync(
+      `SELECT * FROM interactions
+       WHERE child_id = ?
+       ORDER BY timestamp DESC LIMIT ?`,
+      [childId, limit]
+    );
+  }
 }
 
 export async function setSetting(key, value) {
