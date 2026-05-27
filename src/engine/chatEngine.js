@@ -1,8 +1,9 @@
 import { callGroq, handleGroqError } from '../api/groq';
 import { detectState, buildPrompt, detectPatternNote } from './patterns';
 import { speak } from './voice';
+import * as Network from 'expo-network';
 import {
-  logInteraction, savePreference, getPreferences
+  logInteraction, savePreference, getPreferences, enqueueMessage, removeQueuedMessage
 } from '../db/database';
 
 export class ChatEngine {
@@ -53,12 +54,24 @@ export class ChatEngine {
       { role: 'user', content: text },
     ];
 
-    // 5. Call Groq
+    // 5. Call Groq or Queue if Offline
     let aiResponse;
+    let networkState = { isConnected: true, isInternetReachable: true };
     try {
-      aiResponse = await callGroq(messages, 60);
-    } catch (e) {
-      aiResponse = handleGroqError(e.message);
+      networkState = await Network.getNetworkStateAsync();
+    } catch (e) {}
+    
+    const isOffline = networkState.isConnected === false || networkState.isInternetReachable === false;
+
+    if (isOffline) {
+      aiResponse = "I'm offline right now, but I hear you! I'll remember this for when we reconnect.";
+      await enqueueMessage(this.childId, this.sessionId, text, inputType);
+    } else {
+      try {
+        aiResponse = await callGroq(messages, 60);
+      } catch (e) {
+        aiResponse = handleGroqError(e.message);
+      }
     }
 
     // 6. Update history and repeat guard
@@ -79,6 +92,40 @@ export class ChatEngine {
     await speak(aiResponse);
 
     return { text: aiResponse, state };
+  }
+
+  async syncQueue(queuedMessages) {
+    const results = [];
+    if (!queuedMessages || queuedMessages.length === 0) return results;
+    for (const msg of queuedMessages) {
+      const state = detectState(msg.user_text);
+      const systemPrompt = buildPrompt({
+        text: msg.user_text,
+        role: this.role,
+        state,
+        preferences: this.preferences,
+        patternNote: detectPatternNote(this.stateLog),
+        recentResponses: this.recentResponses,
+      });
+
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: msg.user_text },
+      ];
+
+      try {
+        const aiResponse = await callGroq(messages, 60);
+        await logInteraction(
+          msg.session_id, msg.child_id,
+          msg.user_text, aiResponse, state, msg.input_type
+        );
+        await removeQueuedMessage(msg.id);
+        results.push({ userText: msg.user_text, aiResponse });
+      } catch (e) {
+        console.log('Sync failed for msg', msg.id);
+      }
+    }
+    return results;
   }
 
   _extractPreferences(text) {

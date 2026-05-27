@@ -34,7 +34,8 @@
           "microphonePermission": "Allow AutiSense AI to access the microphone for voice interaction.",
           "speechRecognitionPermission": "Allow AutiSense AI to securely recognize your speech."
         }
-      ]
+      ],
+      "@sentry/react-native"
     ]
   }
 }

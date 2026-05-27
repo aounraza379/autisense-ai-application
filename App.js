@@ -13,6 +13,14 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, TouchableOpacity, useColorScheme } from 'react-native';
 import { initDatabase, createChildProfile, getSetting, setSetting } from './src/db/database';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as Sentry from '@sentry/react-native';
+
+// Initialize Sentry for crash reporting and performance monitoring
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || '',
+  tracesSampleRate: 1.0, // Adjust this value in production
+  enabled: !!process.env.EXPO_PUBLIC_SENTRY_DSN, // Only enable if DSN is provided
+});
 
 import Toast from 'react-native-toast-message';
 import HomeScreen     from './src/screens/HomeScreen';
@@ -123,3 +131,5 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+
+export default Sentry.wrap(App);

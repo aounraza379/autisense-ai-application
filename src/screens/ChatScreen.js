@@ -5,11 +5,12 @@ import {
 } from 'react-native';
 import { ChatEngine }      from '../engine/chatEngine';
 import { SpeechRecognizer } from '../engine/voice';
-import { startSession, endSession, getRecentInteractions } from '../db/database';
+import { startSession, endSession, getRecentInteractions, getQueuedMessages } from '../db/database';
 import EmotionBoard  from '../components/EmotionBoard';
 import CoachingLabel from '../components/CoachingLabel';
 import VoiceButton   from '../components/VoiceButton';
 import { toBool }    from '../utils/bool';
+import * as Network from 'expo-network';
 
 export default function ChatScreen({ route }) {
   const { childId, role } = route.params;
@@ -24,11 +25,57 @@ export default function ChatScreen({ route }) {
   const [listening,  setListening]  = useState(false);
   const [processing, setProcessing] = useState(false);
   const [inputText,  setInputText]  = useState('');
+  
+  const [isOffline,  setIsOffline]  = useState(false);
+  const [syncing,    setSyncing]    = useState(false);
 
   useEffect(() => {
     setup();
-    return () => cleanup();
+    const intervalId = setInterval(checkAndSync, 5000);
+    return () => {
+      clearInterval(intervalId);
+      cleanup();
+    };
   }, []);
+
+  async function checkAndSync() {
+    if (syncing) return;
+    try {
+      let netState = { isConnected: true, isInternetReachable: true };
+      try {
+        netState = await Network.getNetworkStateAsync();
+      } catch (e) {}
+      
+      const offline = netState.isConnected === false || netState.isInternetReachable === false;
+      setIsOffline(offline);
+
+      if (!offline) {
+        const queued = await getQueuedMessages();
+        if (queued.length > 0 && engineRef.current) {
+          setSyncing(true);
+          setCoaching('Syncing offline messages...');
+          const syncedResponses = await engineRef.current.syncQueue(queued);
+          
+          if (syncedResponses.length > 0) {
+            setMessages(prev => {
+              const newMsgs = [...prev];
+              syncedResponses.forEach(res => {
+                newMsgs.push({ id: Date.now() + Math.random(), role: 'assistant', content: res.aiResponse });
+              });
+              return newMsgs;
+            });
+            setTimeout(() => {
+              if (flatListRef.current) flatListRef.current.scrollToEnd({ animated: true });
+            }, 300);
+          }
+          setCoaching('Ready! Talk to me!');
+          setSyncing(false);
+        }
+      }
+    } catch (e) {
+      setSyncing(false);
+    }
+  }
 
   async function setup() {
     const sessionId = await startSession(childId, role);
@@ -38,29 +85,18 @@ export default function ChatScreen({ route }) {
     await engine.init();
     engineRef.current = engine;
 
-    // Load Chat History
+    // Check Network and Sync
+    let netState = { isConnected: true, isInternetReachable: true };
     try {
-      const historyRows = await getRecentInteractions(childId, 20, role); // Get last 20 interactions for this role
-      const loadedMessages = [];
-      // DB returns newest first (DESC), so we reverse it to display oldest first
-      historyRows.reverse().forEach((row) => {
-         if (row.user_text) {
-           loadedMessages.push({ id: `hist-u-${row.id}`, role: 'user', content: row.user_text });
-         }
-         if (row.ai_response) {
-           loadedMessages.push({ id: `hist-a-${row.id}`, role: 'assistant', content: row.ai_response });
-         }
-      });
-      setMessages(loadedMessages);
-      
-      // Scroll to end after a brief delay
-      setTimeout(() => {
-        if (flatListRef.current) {
-            flatListRef.current.scrollToEnd({ animated: false });
-        }
-      }, 300);
-    } catch (err) {
-      console.log('[ChatScreen] Error loading history:', err);
+      netState = await Network.getNetworkStateAsync();
+    } catch (e) {}
+    const offline = netState.isConnected === false || netState.isInternetReachable === false;
+    setIsOffline(offline);
+
+    await loadHistory();
+
+    if (!offline) {
+      await checkAndSync();
     }
 
     // Set up voice callbacks
@@ -75,6 +111,30 @@ export default function ChatScreen({ route }) {
     };
   }
 
+  async function loadHistory() {
+    try {
+      const historyRows = await getRecentInteractions(childId, 20, role); 
+      const loadedMessages = [];
+      historyRows.reverse().forEach((row) => {
+         if (row.user_text) {
+           loadedMessages.push({ id: `hist-u-${row.id}`, role: 'user', content: row.user_text });
+         }
+         if (row.ai_response) {
+           loadedMessages.push({ id: `hist-a-${row.id}`, role: 'assistant', content: row.ai_response });
+         }
+      });
+      setMessages(loadedMessages);
+      
+      setTimeout(() => {
+        if (flatListRef.current) {
+            flatListRef.current.scrollToEnd({ animated: false });
+        }
+      }, 300);
+    } catch (err) {
+      console.log('[ChatScreen] Error loading history:', err);
+    }
+  }
+
   async function cleanup() {
     if (sessionIdRef.current) {
       await endSession(sessionIdRef.current);
@@ -86,10 +146,23 @@ export default function ChatScreen({ route }) {
     if (!text?.trim() || toBool(processing)) return;
     setProcessing(true);
 
-    setMessages(prev => [...prev, { id: Date.now(), role: 'user', content: text }]);
-    setCoaching(buildCoachingTip(text));
-
     try {
+      let netState = { isConnected: true, isInternetReachable: true };
+      try {
+        netState = await Network.getNetworkStateAsync();
+      } catch (e) {}
+      
+      const offline = netState.isConnected === false || netState.isInternetReachable === false;
+      setIsOffline(offline);
+
+      if (!offline && engineRef.current) {
+         // pre-sync before processing current msg to maintain order
+         await checkAndSync();
+      }
+
+      setMessages(prev => [...prev, { id: Date.now(), role: 'user', content: text }]);
+      setCoaching(buildCoachingTip(text));
+
       const result = await engineRef.current.process(text, inputType);
       if (result) {
         setMessages(prev => [...prev, {
@@ -108,7 +181,7 @@ export default function ChatScreen({ route }) {
         }
       }, 100);
     }
-  }, [processing]);
+  }, [processing, syncing]);
 
   function buildCoachingTip(text) {
     const t = text.toLowerCase();
@@ -118,16 +191,19 @@ export default function ChatScreen({ route }) {
     return 'Keep talking — you are doing great!';
   }
 
-  // DEBUG: Prop Audit before render
-  console.log('[DEBUG] ChatScreen Render Props:', {
-    processing: { value: processing, type: typeof processing },
-    listening:  { value: listening,  type: typeof listening },
-    childId:    { value: childId,    type: typeof childId },
-    role:       { value: role,       type: typeof role },
-  });
-
   return (
     <SafeAreaView style={styles.container}>
+      {isOffline && (
+        <View style={styles.offlineBanner}>
+          <Text style={styles.offlineText}>Offline Mode: Responses will sync later.</Text>
+        </View>
+      )}
+      {syncing && (
+        <View style={styles.syncBanner}>
+          <Text style={styles.syncText}>Syncing previous offline messages...</Text>
+        </View>
+      )}
+      
       <CoachingLabel text={coaching} />
 
       <FlatList
@@ -181,6 +257,10 @@ export default function ChatScreen({ route }) {
         listening={toBool(listening) === true} 
         disabled={toBool(processing) === true}
         onPress={() => {
+            if (isOffline) {
+                setCoaching('Voice input needs internet. Please type your message instead.');
+                return;
+            }
             if (toBool(listening)) {
                 recognizer.current.stop();
                 setListening(false);
@@ -199,6 +279,10 @@ export default function ChatScreen({ route }) {
 
 const styles = StyleSheet.create({
   container:  { flex:1, backgroundColor:'#fff' },
+  offlineBanner: { backgroundColor: '#FFA000', padding: 8, alignItems: 'center' },
+  offlineText: { color: 'white', fontWeight: 'bold' },
+  syncBanner: { backgroundColor: '#3F51B5', padding: 8, alignItems: 'center' },
+  syncText: { color: 'white', fontWeight: 'bold' },
   chat:       { flex:1, paddingHorizontal:12 },
   bubble:     { maxWidth:'80%', padding:12, borderRadius:16, marginVertical:4 },
   userBubble: { alignSelf:'flex-end', backgroundColor:'#DCF8C6' },

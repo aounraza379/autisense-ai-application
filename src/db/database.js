@@ -63,6 +63,15 @@ export async function initDatabase() {
       key TEXT PRIMARY KEY,
       value TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS message_queue (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_id INTEGER,
+      session_id INTEGER,
+      user_text TEXT,
+      input_type TEXT,
+      timestamp TEXT DEFAULT (datetime('now'))
+    );
   `);
 
   return db;
@@ -256,4 +265,21 @@ export async function exportDataAsCSV(childId) {
     console.error("Export error:", error);
     return { success: false, error: error.message || 'Failed to export data' };
   }
+}
+
+// ── Offline Queue ─────────────────────────────────────────
+
+export async function enqueueMessage(childId, sessionId, userText, inputType) {
+  await db.runAsync(
+    'INSERT INTO message_queue (child_id, session_id, user_text, input_type) VALUES (?, ?, ?, ?)',
+    [childId, sessionId, userText, inputType]
+  );
+}
+
+export async function getQueuedMessages() {
+  return await db.getAllAsync('SELECT * FROM message_queue ORDER BY timestamp ASC');
+}
+
+export async function removeQueuedMessage(id) {
+  await db.runAsync('DELETE FROM message_queue WHERE id = ?', [id]);
 }
