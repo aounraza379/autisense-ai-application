@@ -64,7 +64,7 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-export default function App() {
+function App() {
   const [ready,   setReady]   = useState(false);
   const [childId, setChildId] = useState(null);
   const scheme = useColorScheme();
@@ -77,6 +77,14 @@ export default function App() {
       console.log('Initializing database...');
       await initDatabase();
       console.log('Database OK.');
+      
+      const groqKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
+      console.log('[DEBUG] EXPO_PUBLIC_GROQ_API_KEY is defined:', !!groqKey);
+      if (groqKey) {
+        console.log('[DEBUG] API Key prefix:', groqKey.substring(0, 10) + '...');
+      } else {
+        console.warn('[DEBUG] EXPO_PUBLIC_GROQ_API_KEY IS UNDEFINED! Please restart Metro with -c.');
+      }
       
       let id = await getSetting('childId');
       if (!id) {

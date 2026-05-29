@@ -92,7 +92,7 @@ export class SpeechRecognizer {
       }
     } catch (err) {
       console.log('[DEBUG] Failed to stop/transcribe', err);
-      if (this.onError) this.onError('Failed to transcribe audio.');
+      if (this.onError) this.onError('Failed to transcribe: ' + err.message);
     }
   }
 

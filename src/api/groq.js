@@ -1,4 +1,5 @@
 import axios from 'axios';
+import * as FileSystem from 'expo-file-system/legacy';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY;
@@ -62,24 +63,32 @@ export function handleGroqError(errorCode) {
 }
 
 export async function transcribeAudio(fileUri) {
-  const formData = new FormData();
-  formData.append('file', {
-    uri: fileUri,
-    type: 'audio/m4a', // Standard for expo-av
-    name: 'recording.m4a'
-  });
-  formData.append('model', 'whisper-large-v3');
-
   try {
-    const response = await axios.post('https://api.groq.com/openai/v1/audio/transcriptions', formData, {
-      headers: {
-        'Authorization': `Bearer ${process.env.EXPO_PUBLIC_GROQ_API_KEY}`,
-        'Content-Type': 'multipart/form-data',
+    const response = await FileSystem.uploadAsync(
+      'https://api.groq.com/openai/v1/audio/transcriptions',
+      fileUri,
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.EXPO_PUBLIC_GROQ_API_KEY}`,
+        },
+        httpMethod: 'POST',
+        uploadType: 1, // FileSystemUploadType.MULTIPART evaluates to 1
+        fieldName: 'file',
+        mimeType: 'audio/m4a',
+        parameters: {
+          model: 'whisper-large-v3',
+        },
       }
-    });
-    return response.data.text;
+    );
+
+    const result = JSON.parse(response.body);
+    if (result.error) {
+      console.log('[DEBUG] Groq API returned error:', result.error);
+      throw new Error(result.error.message || 'API Error');
+    }
+    return result.text;
   } catch (error) {
-    console.log('[DEBUG] Transcription error:', error.response?.data || error.message);
+    console.log('[DEBUG] FileSystem upload/transcribe error:', error);
     throw new Error('Transcription failed');
   }
 }
